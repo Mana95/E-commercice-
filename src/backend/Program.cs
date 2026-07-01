@@ -16,13 +16,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-var jwtSection = builder.Configuration.GetSection("Jwt");
-builder.Services.Configure<JwtSettings>(jwtSection);
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProductService, ProductService>();
-
-var jwtSettings = jwtSection.Get<JwtSettings>() ?? new JwtSettings();
 
 builder.Services.AddAuthentication(options =>
     {
@@ -31,6 +28,10 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
+        // Read config lazily (not into a variable captured before builder.Build()) so
+        // config sources added after this point (e.g. WebApplicationFactory overrides
+        // in tests) are reflected when the handler is first initialized.
+        var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings();
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,

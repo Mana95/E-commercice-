@@ -45,7 +45,7 @@
 | 004-bolt-007 | Playwright E2E: profile view/update/change-password | intent-004 (ECOM-001) | PENDING | S | |
 | 005-bolt-001 | Backend Product + Category + Brand models + DB migration | intent-005 (ECOM-002) | DONE | M | Fixed missing appsettings.Development.json/example.json; 26/26 tests pass |
 | 005-bolt-002 | Backend ProductService (create/update/archive/get/list) | intent-005 (ECOM-002) | DONE | M | 11/11 new tests pass, 37/37 total, build clean |
-| 005-bolt-003 | Backend ProductController + auth guard | intent-005 (ECOM-002) | PENDING | M | |
+| 005-bolt-003 | Backend ProductController + auth guard | intent-005 (ECOM-002) | DONE | M | Fixed real JWT signing-key timing bug in Program.cs (validation used a variable captured before builder.Build()); also validates intent-001 AC-007. 8/8 new tests, 45/45 total |
 | 005-bolt-004 | Backend unit tests (xUnit) | intent-005 (ECOM-002) | PENDING | S | |
 | 005-bolt-005 | Frontend admin product list page | intent-005 (ECOM-002) | PENDING | S | |
 | 005-bolt-006 | Frontend admin create/edit product form | intent-005 (ECOM-002) | PENDING | M | |
