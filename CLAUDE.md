@@ -8,7 +8,11 @@ You read this file at the start of every session before doing anything else.
 ---
 
 ## Memory — Locked Decisions
-These decisions are final. Do not re-ask the user about these unless they explicitly say "reset stack".
+These decisions are final for **this** project. Do not re-ask the user about these
+unless they explicitly say "reset stack". If you are being pointed at a *different*
+existing codebase that doesn't already have this file, do NOT assume this stack
+applies there — see Project State Check below and
+`ai-dlc/guidelines/existing-project-setup.md`.
 
 ```
 Frontend  : React 18 + TypeScript
@@ -24,15 +28,43 @@ Testing   : xUnit (.NET) + Vitest (React) + Playwright (E2E)
 
 ## Session Start Protocol
 At the start of EVERY session, you must:
+
 1. Read this file completely
-2. Read `ai-dlc/ops/build/backlog.md` to know current bolt status
-3. Read `ai-dlc/rules/architecture.md` for architectural constraints
-4. Say: "Session ready. Current bolt: [bolt name]. What would you like to do?"
-Do NOT skip this. Do NOT start coding without completing steps 1-4.
+2. **Project State Check** — determine which situation you're in before anything else:
+   - **A. Fresh project** — no source code exists yet, and `ai-dlc/` is empty/templated. Proceed normally: locked decisions above apply, scaffold code as intents get built.
+   - **B. Existing project, AI-DLC already configured** — `ai-dlc/` exists and is populated (backlog has entries, architecture.md reflects a real stack). This is the normal repeat-session case. Proceed to step 3.
+   - **C. Existing project, AI-DLC NOT yet configured** — real application code already exists (check for `.csproj`/`package.json`/other manifest files, existing `src/` structure) but there is no `ai-dlc/` folder, or it's still the empty template. **Do not proceed to Phase 0/1.** Instead, run the onboarding flow in `ai-dlc/guidelines/existing-project-setup.md` first: analyze the actual existing stack/conventions, populate `ai-dlc/rules/architecture.md` and this file's Memory block from what's really there (never copy this project's locked stack onto a different one), then scaffold the rest of `ai-dlc/`.
+   - If unsure which situation applies, ask the user rather than guessing — the wrong assumption here (e.g. treating an existing legacy codebase as greenfield) cascades into every later phase.
+3. Read `ai-dlc/ops/build/backlog.md` to know current bolt status
+4. Read `ai-dlc/rules/architecture.md` for architectural constraints
+5. Read `ai-dlc/rules/harness-governance.md` for agent operating rules (branching discipline, tool access, CI, lint gates)
+6. Say: "Session ready. Current bolt: [bolt name]. What would you like to do?" (situation A/B) — or, for situation C, summarize the onboarding plan and ask for confirmation before scaffolding anything.
+Do NOT skip this. Do NOT start coding without completing steps 1-6.
 
 ---
 
 ## Core Workflow — How You Work
+
+### Phase 0: Brainstorming (Domain-Expert Discussion)
+- Runs before Phase 1, whenever the user brings a new feature/epic/ticket — not for
+  small bug fixes or one-line changes.
+- Act like a domain expert on this product (e-commerce), not a scribe transcribing
+  whatever was pasted. Before formalizing an intent:
+  - Surface edge cases the requirement doesn't mention (e.g. for a catalog feature:
+    what happens to inventory reservations on order cancellation? for auth: what
+    happens to active sessions on password change?).
+  - Point out at least one alternative approach or a risk in the stated approach, if
+    one exists, rather than silently accepting the first framing.
+  - Ask about domain-specific business rules that are commonly needed but weren't
+    specified (e.g. currency/rounding rules for pricing, soft-delete vs hard-delete
+    conventions, idempotency for payment-adjacent actions).
+  - Keep this to a short, focused exchange (2–4 questions/observations) — this is a
+    sanity check before formalizing, not an open-ended design workshop.
+- Skip this phase only if the user explicitly says to skip discussion (e.g. "just
+  create the intent", "skip the brainstorm").
+- Output feeds directly into Phase 1 Intake — clarified scope, resolved ambiguities,
+  and any domain considerations get written into the intent file, not lost after the
+  conversation.
 
 ### Phase 1: Intake
 - When the user gives a new requirement, read `ai-dlc/intents/` for existing intents
@@ -47,6 +79,11 @@ Do NOT skip this. Do NOT start coding without completing steps 1-4.
 ### Phase 2: Discovery
 - Check `ai-dlc/discovery/discovery-report.md` for existing discovery context
 - If Jira/GitHub/Figma sources are connected, check them for related work
+- If a source the user wants checked (GitHub/Jira/Figma/etc.) is NOT yet connected —
+  no token configured, or the configured token lacks the needed scope — stop and ask
+  the user to add the required credential to a gitignored `.env` (never paste it in
+  chat; see `ai-dlc/rules/harness-governance.md` External Tool Access). Don't silently
+  skip discovery on a source that was actually supposed to be checked.
 - Update discovery report with findings
 - Detect Mode 1 (existing work found) or Mode 2 (build from scratch)
 - Document mode decision in discovery report
@@ -68,6 +105,7 @@ Do NOT skip this. Do NOT start coding without completing steps 1-4.
 - Do NOT start building without this confirmation
 
 ### Phase 5: Build
+- Before writing any bolt code: confirm you are on a `feature/{intent-id}-{short-desc}` branch, not `main`. If not, create it first and commit any pending intake artifacts to it. See `ai-dlc/rules/harness-governance.md` (Branch-Before-Build).
 - Build one bolt at a time
 - For each bolt:
   a. State which bolt you are starting
@@ -82,7 +120,12 @@ Do NOT skip this. Do NOT start coding without completing steps 1-4.
 ### Phase 6: Validation
 - After each bolt, validate against the acceptance criteria in the intent file
 - Run through each criterion explicitly: PASS or FAIL
-- If ALL pass → mark bolt DONE in backlog, move to next bolt
+- Automated tests are the required verification method:
+  - Backend: xUnit suite must pass
+  - Frontend: Vitest suite must pass
+  - User-facing flows: Playwright E2E must pass — this is what satisfies "verify it actually works," not a manual click-through
+- Manual browser testing is OPTIONAL — use it for a quick sanity check or to debug a failing Playwright test, but a bolt is not blocked on it. Do not require a live dev server + manual click-through before marking a UI bolt DONE if Playwright coverage already exists for that flow.
+- If ALL required checks pass → mark bolt DONE in backlog, move to next bolt
 - If ANY fail → trigger bug lifecycle (see below)
 
 ### Phase 7: Bug Lifecycle
@@ -112,10 +155,12 @@ When a validation fails:
 
 ## Prompt Quality Gate
 Before generating ANY code, internally check:
+- [ ] For a new feature/epic: did brainstorming (Phase 0) happen, or was it explicitly skipped?
 - [ ] Does an intent file exist for this work?
 - [ ] Have I read the backlog and know the current bolt?
 - [ ] Have I confirmed the tech stack from memory above?
 - [ ] Has the user confirmed the plan?
+- [ ] Am I on a feature branch, not `main`? (see harness-governance.md)
 If any check fails → stop and resolve it first.
 
 ---
@@ -142,6 +187,8 @@ If any check fails → stop and resolve it first.
 | `ai-dlc/discovery/discovery-report.md` | Discovery findings |
 | `ai-dlc/ops/build/backlog.md` | Live bolt status tracker |
 | `ai-dlc/rules/architecture.md` | Architecture decisions |
+| `ai-dlc/rules/harness-governance.md` | Agent operating rules: branching discipline, external tool access, CI, lint gates |
+| `ai-dlc/guidelines/existing-project-setup.md` | How to configure AI-DLC on a pre-existing codebase (situation C) |
 | `ai-dlc/rules/infrastructure.md` | Infrastructure & deployment (placeholder until cloud provider is chosen) |
 | `ai-dlc/rules/code-standards.md` | Coding conventions |
 | `ai-dlc/rules/security.md` | Security rules |
