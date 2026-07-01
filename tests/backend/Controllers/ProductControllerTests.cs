@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using DevFlow.Api.Data;
 using DevFlow.Api.DTOs;
 using DevFlow.Api.Models;
@@ -13,6 +15,12 @@ public class ProductControllerTests : IClassFixture<AuthApiFactory>
 {
     private readonly AuthApiFactory _factory;
     private const string ValidPassword = "Str0ng!Pass";
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() },
+    };
 
     public ProductControllerTests(AuthApiFactory factory)
     {
@@ -107,7 +115,7 @@ public class ProductControllerTests : IClassFixture<AuthApiFactory>
         {
             Name = "Wireless Mouse", Sku = $"SKU-{Guid.NewGuid()}", Price = 29.99m, CategoryId = categoryId,
         });
-        var created = await createResponse.Content.ReadFromJsonAsync<ProductResponse>();
+        var created = await createResponse.Content.ReadFromJsonAsync<ProductResponse>(JsonOptions);
 
         var response = await client.PutAsJsonAsync($"/api/v1/products/{created!.Id}", new UpdateProductRequest
         {
@@ -126,12 +134,12 @@ public class ProductControllerTests : IClassFixture<AuthApiFactory>
         {
             Name = "Wireless Mouse", Sku = $"SKU-{Guid.NewGuid()}", Price = 29.99m, CategoryId = categoryId,
         });
-        var created = await createResponse.Content.ReadFromJsonAsync<ProductResponse>();
+        var created = await createResponse.Content.ReadFromJsonAsync<ProductResponse>(JsonOptions);
 
         var response = await client.DeleteAsync($"/api/v1/products/{created!.Id}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var archived = await response.Content.ReadFromJsonAsync<ProductResponse>();
+        var archived = await response.Content.ReadFromJsonAsync<ProductResponse>(JsonOptions);
         Assert.Equal(ProductStatus.Archived, archived!.Status);
     }
 
@@ -143,6 +151,21 @@ public class ProductControllerTests : IClassFixture<AuthApiFactory>
         var response = await client.GetAsync("/api/v1/products");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Create_ValidRequest_SerializesStatusAsString()
+    {
+        var client = await CreateAuthenticatedClientAsync();
+        var categoryId = SeedCategory();
+
+        var response = await client.PostAsJsonAsync("/api/v1/products", new CreateProductRequest
+        {
+            Name = "Wireless Mouse", Sku = $"SKU-{Guid.NewGuid()}", Price = 29.99m, CategoryId = categoryId,
+        });
+
+        var rawBody = await response.Content.ReadAsStringAsync();
+        Assert.Contains("\"status\":\"Draft\"", rawBody);
     }
 
     [Fact]
