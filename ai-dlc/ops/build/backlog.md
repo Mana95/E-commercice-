@@ -48,7 +48,7 @@
 | 005-bolt-003 | Backend ProductController + auth guard | intent-005 (ECOM-002) | DONE | M | Fixed real JWT signing-key timing bug in Program.cs (validation used a variable captured before builder.Build()); also validates intent-001 AC-007. 8/8 new tests, 45/45 total |
 | 005-bolt-004 | Backend unit tests (xUnit) | intent-005 (ECOM-002) | DONE | S | Written alongside 005-bolt-002/003 (45/45 passing) |
 | 005-bolt-005 | Frontend admin product list page | intent-005 (ECOM-002) | DONE | S | Fixed apiFetch not attaching JWT; fixed API enum serialization (int→string); 19/19 tests pass |
-| 005-bolt-006 | Frontend admin create/edit product form | intent-005 (ECOM-002) | PENDING | M | |
+| 005-bolt-006 | Frontend admin create/edit product form | intent-005 (ECOM-002) | DONE | M | Added minimal CategoryController (user-confirmed scope addition); fixed CORS, JWT enum serialization, Tailwind/PostCSS cwd-dependent config resolution; manually verified end-to-end in browser (register→login→create product) |
 | 005-bolt-007 | Frontend unit tests (Vitest) | intent-005 (ECOM-002) | PENDING | S | |
 | 005-bolt-008 | Playwright E2E: create → edit → archive product | intent-005 (ECOM-002) | PENDING | S | |
 | 006-bolt-001 | Backend ProductImage model + DB migration | intent-006 (ECOM-002) | PENDING | S | Blocked on file storage provider decision |
