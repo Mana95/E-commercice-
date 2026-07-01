@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using DevFlow.Api.Data;
 using DevFlow.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,19 +10,22 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-var jwtSection = builder.Configuration.GetSection("Jwt");
-builder.Services.Configure<JwtSettings>(jwtSection);
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
-var jwtSettings = jwtSection.Get<JwtSettings>() ?? new JwtSettings();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 builder.Services.AddAuthentication(options =>
     {
@@ -30,6 +34,10 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
+        // Read config lazily (not into a variable captured before builder.Build()) so
+        // config sources added after this point (e.g. WebApplicationFactory overrides
+        // in tests) are reflected when the handler is first initialized.
+        var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings();
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -45,6 +53,20 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+const string DevCorsPolicy = "DevCors";
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy(DevCorsPolicy, policy =>
+        {
+            var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                ?? new[] { "http://localhost:5173" };
+            policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod();
+        });
+    });
+}
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -52,6 +74,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseCors(DevCorsPolicy);
 }
 
 app.UseHttpsRedirection();

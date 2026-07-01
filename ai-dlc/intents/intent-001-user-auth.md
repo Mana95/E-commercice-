@@ -29,7 +29,7 @@ Build core authentication: registration, login, logout, and JWT access + refresh
 - [ ] AC-004: User can login with valid credentials; API returns 200 with JWT access token
 - [ ] AC-005: Login with wrong credentials returns 401 Unauthorized
 - [ ] AC-006: JWT token contains user ID and email claims, expires in 1 hour
-- [ ] AC-007: Protected endpoints reject requests without valid JWT (401)
+- [x] AC-007: Protected endpoints reject requests without valid JWT (401) — validated via ProductController (intent-005, 005-bolt-003)
 - [ ] AC-008: Frontend login form submits credentials and stores token on success
 - [ ] AC-009: Frontend register form submits data and redirects to login on success
 - [ ] AC-010: Frontend shows validation errors from API

@@ -1,6 +1,8 @@
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import { RegisterPage } from './pages/RegisterPage'
 import { LoginPage } from './pages/LoginPage'
+import { ProductListPage } from './pages/ProductListPage'
+import { ProductFormPage } from './pages/ProductFormPage'
 import { AuthProvider } from './components/AuthProvider'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { useAuth } from './hooks/useAuth'
@@ -38,6 +40,30 @@ function App() {
         />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/admin/products"
+          element={
+            <ProtectedRoute>
+              <ProductListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/products/new"
+          element={
+            <ProtectedRoute>
+              <ProductFormPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/products/:id"
+          element={
+            <ProtectedRoute>
+              <ProductFormPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </AuthProvider>
   )
