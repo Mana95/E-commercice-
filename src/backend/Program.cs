@@ -20,6 +20,7 @@ var jwtSection = builder.Configuration.GetSection("Jwt");
 builder.Services.Configure<JwtSettings>(jwtSection);
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 var jwtSettings = jwtSection.Get<JwtSettings>() ?? new JwtSettings();
 
