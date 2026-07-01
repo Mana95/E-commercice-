@@ -48,6 +48,11 @@
 - Reason: Industry standard for each stack.
 - Date: Project start
 
+### ADR-006: Frontend routing
+- Decision: react-router-dom
+- Reason: User confirmed. Needed for Register/Login pages and protected routes (intent-001 bolts 006-007).
+- Date: 2026-07-01
+
 ---
 
 ## Open Decisions
