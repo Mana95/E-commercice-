@@ -43,7 +43,7 @@
 | 004-bolt-005 | Frontend Change Password form | intent-004 (ECOM-001) | PENDING | S | |
 | 004-bolt-006 | Frontend unit tests (Vitest) | intent-004 (ECOM-001) | PENDING | S | |
 | 004-bolt-007 | Playwright E2E: profile view/update/change-password | intent-004 (ECOM-001) | PENDING | S | |
-| 005-bolt-001 | Backend Product + Category + Brand models + DB migration | intent-005 (ECOM-002) | PENDING | M | |
+| 005-bolt-001 | Backend Product + Category + Brand models + DB migration | intent-005 (ECOM-002) | DONE | M | Fixed missing appsettings.Development.json/example.json; 26/26 tests pass |
 | 005-bolt-002 | Backend ProductService (create/update/archive/get/list) | intent-005 (ECOM-002) | PENDING | M | |
 | 005-bolt-003 | Backend ProductController + auth guard | intent-005 (ECOM-002) | PENDING | M | |
 | 005-bolt-004 | Backend unit tests (xUnit) | intent-005 (ECOM-002) | PENDING | S | |
